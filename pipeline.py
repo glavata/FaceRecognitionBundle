@@ -28,23 +28,24 @@ class Pipeline:
 
     def train(self, folds = 10, num_epochs_pre = 1, batch_count_pre = 1, num_epochs_post = 1, batch_count_post = 1):
         
-        t_start_total_elapsed = perf_counter()  
+        self.__folds = folds
+        times_split = []
+
         preproc = False
         if(self.__prepro != None):
             preproc = True
 
-        labels = list(range(0,self.__z))
+        #labels = list(range(0,self.__z))
         conf_mat = np.zeros((self.__z,self.__z))
         acc_s = 0
 
         skf = StratifiedKFold(n_splits=folds, shuffle=True)
         i = 0
 
-
-
         for train_split, test_split in skf.split(self.__X, self.__y):
             #if(preproc):
             #    self.__prepro.reinit()
+
             self.__clear_folder('temp_data/')
             self.__save_train_test_split(i, train_split, test_split)
         
@@ -52,7 +53,11 @@ class Pipeline:
                 self.__train_epoch_split(num_epochs_pre, i, batch_count_pre, preproc)
                 self.__clear_folder('temp_data/batches/')
 
+            t_start_train_elapsed = perf_counter()
             self.__train_epoch_split(num_epochs_post, i, batch_count_post, preproc, True)
+            t_end_train_elapsed = perf_counter()
+
+            times_split.append(t_end_train_elapsed - t_start_train_elapsed)
 
             post_X_test, post_y_test = self.__load_split(i, False, preproc)
             y_pred = self.__classifier.predict(post_X_test)
@@ -62,17 +67,14 @@ class Pipeline:
             #conf_mat += res_c
 
             i+=1
-
             self.__classifier.reinit()
-        
-        t_end_total_elapsed = perf_counter()
 
+    
         acc_s /= folds
+        
+        time_mins_avg_train_elapsed = mean(times_split) / 60
 
-
-        time_mins_total_elapsed = (t_end_total_elapsed - t_start_total_elapsed) / 60
-
-        return [conf_mat, acc_s, time_mins_total_elapsed]
+        return [conf_mat, acc_s, time_mins_avg_train_elapsed]
 
 
     def __train_epoch_split(self, num_epochs, tr_split_ind, batch_count, preproc, shuffle = False):
@@ -106,8 +108,8 @@ class Pipeline:
                 target = self.__prepro if preproc else self.__classifier
                 res = target.train_model(X_batch, y_batch)
 
-                print("batch {0}/{1}".format(j+1,batch_count), end="\r", flush=True)
-            print("epoch {0}/{1}".format(e+1,num_epochs), end="\r", flush=True)
+                print("val_split {0}/{1} epoch {2}/{3} batch {4}/{5}   ".format(tr_split_ind+1, self.__folds, e+1, num_epochs, j+1,batch_count), end="\r", flush=True)
+            
         
     def __clear_folder(self, folder):
         for parent, dirnames, filenames in os.walk(folder):

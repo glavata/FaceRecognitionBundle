@@ -59,7 +59,7 @@ class CNN_SVM(Preprocessor, Classifier):
             X = X.reshape(X.shape[0],X.shape[1],X.shape[2],1)
         y_categ = to_categorical(y, self.__num_classes)
         res = self.__model.train_on_batch(X, y_categ)
-        print(res)
+        #print(res)
         return res
 
     def predict(self, X):

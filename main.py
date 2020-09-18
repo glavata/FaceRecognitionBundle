@@ -48,6 +48,8 @@ acc_s = []
 times = []
 params_r = []
 
+t_start_total = perf_counter()  
+
 for a in epochs_arr:
     for b in batch_count_arr:
         for c in conv_layers_count_arr:
@@ -63,12 +65,19 @@ for a in epochs_arr:
                                             'FinalFeatVec':g
                                             }, z, X_shape)
 
-                            pipeline = pipeline(X, y, z, cur_dataset.name, None, cnn_s)
-                            results = pipeline.train(num_val_splits, a, b)
+                            obj_set = {'epochs': a, 'batch_count': b, 'ConvCount': c, 'ConvFilterSizes': str(d), \
+                                            'ConvFilterCount': str(e), 'FirstDenseLayer':f, 'FinalFeatVec':g}
+                            print("current config {0}".format(str(obj_set)))
+                            pipeline = Pipeline(X, y, z, cur_dataset.name, None, cnn_s)
+                            results = pipeline.train(num_val_splits, 1, 1, a, b)
+
+                            t_cur_total = perf_counter()
+                            t_cur_total_elapsed = t_cur_total - t_start_total
+                            print('cur time elapsed hours{0}, mins{1}, secs{2}',format(t_cur_total_elapsed/60/60, t_cur_total_elapsed/60, t_cur_total_elapsed))
+
                             acc_s.append(results[1])
                             times.append(results[2])
-                            params_r.append({'epochs': a, 'batch_count': b, 'ConvCount': c, 'ConvFilterSizes': str(d), \
-                                            'ConvFilterCount': str(e), 'FirstDenseLayer':f, 'FinalFeatVec':g})     
+                            params_r.append(obj_set)     
 
 
 
@@ -81,7 +90,7 @@ for a in epochs_arr:
 #sn.heatmap(results[0], annot=True, annot_kws={"size": 10})
 #plt.show()
 
-with open("results/res1", 'wb') as f:
+with open("results/res2", 'wb') as f:
     np.savez(f, acc_s, times, params_r)
 
 
