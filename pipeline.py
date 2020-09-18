@@ -40,32 +40,19 @@ class Pipeline:
         skf = StratifiedKFold(n_splits=folds, shuffle=True)
         i = 0
 
-        times_sec_pre = []
-        times_sec_post = []
-        acc_arr_total = []
-        loss_arr_total = []
+
 
         for train_split, test_split in skf.split(self.__X, self.__y):
             #if(preproc):
             #    self.__prepro.reinit()
             self.__clear_folder('temp_data/')
-            self.__clear_folder('temp_data/batches')
             self.__save_train_test_split(i, train_split, test_split)
         
             if(preproc):
-                t_start_pre_fold = perf_counter()
                 self.__train_epoch_split(num_epochs_pre, i, batch_count_pre, preproc)
-                t_end_pre_fold = perf_counter()
-                times_sec_pre.append(t_end_pre_fold - t_start_pre_fold)
                 self.__clear_folder('temp_data/batches/')
 
-            t_start_post_fold = perf_counter()
-            acc_arr, loss_arr = self.__train_epoch_split(num_epochs_post, i, batch_count_post, preproc, True)
-            acc_arr_total.append(acc_arr)
-            loss_arr_total.append(loss_arr)
-
-            t_end_post_fold = perf_counter()
-            times_sec_post.append(t_end_post_fold - t_start_post_fold)
+            self.__train_epoch_split(num_epochs_post, i, batch_count_post, preproc, True)
 
             post_X_test, post_y_test = self.__load_split(i, False, preproc)
             y_pred = self.__classifier.predict(post_X_test)
@@ -82,20 +69,17 @@ class Pipeline:
 
         acc_s /= folds
 
-        #time_mins_prepro_avg = mean(times_sec_pre) / 60
-        time_mins_post_avg = mean(times_sec_post) / 60
+
         time_mins_total_elapsed = (t_end_total_elapsed - t_start_total_elapsed) / 60
 
-        return [conf_mat, acc_s, time_mins_total_elapsed, time_mins_post_avg, loss_arr_total, acc_arr_total]
+        return [conf_mat, acc_s, time_mins_total_elapsed]
 
 
     def __train_epoch_split(self, num_epochs, tr_split_ind, batch_count, preproc, shuffle = False):
         
-        accuracy_arr = []
-        loss_arr = []
-
         for e in range(0,num_epochs):
             X_train, y_train = self.__load_split(tr_split_ind, True, preproc)
+            self.__clear_folder('temp_data/batches')
 
             if(shuffle):
                 rand_ind = np.array(list(range(0,X_train.shape[0])))
@@ -111,22 +95,19 @@ class Pipeline:
                 for _, part_ind in skf.split(X_train, y_train):
                     X_part = X_train[part_ind]
                     y_part = y_train[part_ind]
-                    self.__save_data_generic('temp_data/batches/' + self.__dataset_name + '_' + str(e)+ '_' + str(s), X_part, y_part)
+                    self.__save_data_generic('temp_data/batches/' + self.__dataset_name + '_' + str(s), X_part, y_part)
                     s+=1
             else:
-                self.__save_data_generic('temp_data/batches/' + self.__dataset_name + '_' + '0', X_train, y_train)
+                self.__save_data_generic('temp_data/batches/' + self.__dataset_name + '_0' , X_train, y_train)
 
             for j in range(0, batch_count):
                 #open train x/y split part(batch) and train
-                X_batch, y_batch = self.__load_data_generic('temp_data/batches/' + self.__dataset_name + '_' + str(e)+ '_' + str(j))
+                X_batch, y_batch = self.__load_data_generic('temp_data/batches/' + self.__dataset_name + '_' + str(j))
                 target = self.__prepro if preproc else self.__classifier
                 res = target.train_model(X_batch, y_batch)
-                accuracy_arr.append(res[1])
-                loss_arr.append(res[0])
-                print("batch {0}/{1}".format(j+1,batch_count))
 
+                print("batch {0}/{1}".format(j+1,batch_count))
             print("epoch {0}/{1}".format(e+1,num_epochs))
-        return accuracy_arr, loss_arr
         
     def __clear_folder(self, folder):
         for parent, dirnames, filenames in os.walk(folder):
@@ -159,6 +140,6 @@ class Pipeline:
 
         return res1, res2
 
-    def __save_data_generic(self, dir, part1, part2):
-        with open(dir, 'wb') as f:
+    def __save_data_generic(self, dir_tgt, part1, part2):
+        with open(dir_tgt, 'wb') as f:
             np.savez(f, part1, part2)

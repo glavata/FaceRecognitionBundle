@@ -131,3 +131,5 @@ dmypy.json
 # Project specific
 datasets/
 temp_data/
+results/
+.vscode/
