@@ -58,8 +58,8 @@ class Pipeline:
             y_pred = self.__classifier.predict(post_X_test)
 
             acc_s += accuracy_score(post_y_test,y_pred)
-            res_c = confusion_matrix(post_y_test, y_pred, labels=labels)
-            conf_mat += res_c
+            #res_c = confusion_matrix(post_y_test, y_pred, labels=labels)
+            #conf_mat += res_c
 
             i+=1
 
@@ -106,8 +106,8 @@ class Pipeline:
                 target = self.__prepro if preproc else self.__classifier
                 res = target.train_model(X_batch, y_batch)
 
-                print("batch {0}/{1}".format(j+1,batch_count))
-            print("epoch {0}/{1}".format(e+1,num_epochs))
+                print("batch {0}/{1}".format(j+1,batch_count), end="\r", flush=True)
+            print("epoch {0}/{1}".format(e+1,num_epochs), end="\r", flush=True)
         
     def __clear_folder(self, folder):
         for parent, dirnames, filenames in os.walk(folder):
