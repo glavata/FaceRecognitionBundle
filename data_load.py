@@ -102,8 +102,9 @@ class DataLoader:
                         light_elev = int(groups[3])
 
                         im = Image.open(root + '/' + file)
-                        numIm = np.array(im)
-                        resIm = numIm
+                        resIm = np.array(im)
+                        if(self.__settings['resize']):
+                            resIm = cv2.resize(resIm, (75,100), interpolation = cv2.INTER_CUBIC)
                         #resIm = cv2.equalizeHist(numIm)
 
                         if self.__dataset_type == Dataset.YALE_EX:

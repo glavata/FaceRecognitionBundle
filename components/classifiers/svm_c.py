@@ -1,5 +1,6 @@
 from components.classifier import Classifier
 from sklearn import svm
+from sklearn.base import clone
 
 class SVM_C(Classifier):
     
@@ -18,3 +19,6 @@ class SVM_C(Classifier):
 
     def predict(self, y):
         return self.__model.predict(y)
+
+    def reinit(self):
+        self._model = clone(self.__model)

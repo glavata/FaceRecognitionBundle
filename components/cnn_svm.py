@@ -40,6 +40,7 @@ class CNN_SVM(Preprocessor, Classifier):
         firstDenseLayer = params['FirstDenseLayer']
         finalFeatVec = params['FinalFeatVec']
 
+
         model.add(Dense(firstDenseLayer, activation='relu'))
         if(finalFeatVec != None):
             model.add(Dense(finalFeatVec, activation='relu'))
